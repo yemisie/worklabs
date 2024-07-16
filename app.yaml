@@ -1,0 +1,83 @@
+---
+- hosts: lamp
+  remote_user: ubuntu
+  become: true
+
+  tasks:
+    - name: Install packages
+      apt:
+        name: "{{ item }}"
+        state: present
+        update_cache: true
+      with_items:
+       - apache2
+       - mysql-server
+       - mysql-common
+       - mysql-client
+       - libapache2-mod-wsgi
+  
+    - name: Start services
+      service:
+        name: "{{ item }}"
+        state: running
+      with_items:
+       - apache2
+       - mysql
+
+    - name: Enable modssl
+      shell: a2enmod ssl 
+
+    - name: Enable default HTTPS site
+      shell: a2ensite default-ssl
+
+# Database
+    - name: Install python mysql lib 
+      apt:
+        name: python-mysqldb
+        state: present 
+    
+    - name:
+      mysql_user:
+        name: appuser
+        password: 94nfsSL7
+        priv: "*.*:ALL"
+        state: present 
+
+    - name:
+      mysql_db:
+        name: appdata 
+        state: present
+    
+    # App 
+    - name: Install pip 
+      apt:
+        name: python-pip
+        state: present 
+
+    - name: Download app
+      git:
+        repo: https://github.com/whelemd/ansible_demo.git
+        dest: /tmp/webapp
+    
+    - name: Install app requirements
+      pip:
+        requirements: /tmp/webapp/app/requirements.txt
+
+    # Configure / Install
+    - name: Install mod-wsgi 
+      apt:
+        name: libapache2-mod-wsgi 
+        state: present
+    
+    - name: Copy the apache configuration file 
+      copy:
+        src: "apache.conf"
+        dest: /etc/apache2/site-available/000-default.conf
+      notify: restart apache 
+
+  handlers:
+    - name: restart apache
+      service: 
+        name: apache2
+        state: restarted
+# to run this file 'ansible-playbook /home/edobox/app.yaml'

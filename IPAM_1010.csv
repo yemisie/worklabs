@@ -1,0 +1,5 @@
+IP Address,Hostname,Description,DC-Location
+10.175.0.1,server1,Main server,DC1
+10.175.0.2,server2,Backup server,DC2
+10.175.0.3,server3,Database server,DC1
+10.175.0.4,server4,Web server,DC2
